@@ -1,3 +1,6 @@
 [submodule "extensions/extensions/IF_prompt_MKR"]
 	path = extensions/extensions/IF_prompt_MKR
 	url = https://github.com/if-ai/IF_prompt_MKR.git
+[submodule "extensions/IF_prompt_MKR"]
+	path = extensions/IF_prompt_MKR
+	url = https://github.com/if-ai/IF_prompt_MKR.git
