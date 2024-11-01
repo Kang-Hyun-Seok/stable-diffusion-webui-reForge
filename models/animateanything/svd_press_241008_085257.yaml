@@ -1,0 +1,95 @@
+pretrained_model_path: ./extensions/animate_anything/weight/train_2024-10-08T08-52-57/checkpoint-10000
+output_dir: ./output/svd
+train_data:
+  width: 1024
+  height: 576
+  use_bucketing: false
+  return_mask: true
+  return_motion: true
+  sample_start_idx: 1
+  fps: 30
+  frame_step: 1
+  n_sample_frames: 14
+  single_video_path: ''
+  single_video_prompt: ''
+  fallback_prompt: ''
+  path: ''
+  json_path: ./Video-BLIP2-Preprocessor/train_data/240516_press_video.json
+  image_dir: ''
+  image_json: ''
+  video_dir: ''
+  video_json: ''
+  single_img_prompt: ''
+validation_data:
+  prompt: A man is floating in the water
+  prompt_image: ./animate-anything/example/press/press_man is floating in the water.png
+  sample_preview: true
+  num_frames: 14
+  width: 1024
+  height: 576
+  num_inference_steps: 25
+  guidance_scale: 9
+  fps: 30
+  motion_bucket_id: 127
+  decode_chunk_size: 7
+extra_train_data: []
+dataset_types:
+- video_blip
+shuffle: true
+validation_steps: 500
+trainable_modules:
+- all
+- attn1
+- attn2
+- conv_in
+- temp_conv
+- motion
+extra_unet_params: null
+extra_text_encoder_params: null
+train_batch_size: 1
+max_train_steps: 20000
+learning_rate: 5.0e-06
+scale_lr: false
+lr_scheduler: constant
+lr_warmup_steps: 0
+adam_beta1: 0.9
+adam_beta2: 0.999
+adam_weight_decay: 0
+adam_epsilon: 1.0e-08
+max_grad_norm: 1.0
+gradient_accumulation_steps: 1
+gradient_checkpointing: true
+text_encoder_gradient_checkpointing: false
+checkpointing_steps: 1000
+resume_from_checkpoint: null
+resume_step: null
+mixed_precision: fp16
+use_8bit_adam: false
+enable_xformers_memory_efficient_attention: true
+enable_torch_2_attn: true
+seed: 6
+use_offset_noise: false
+rescale_schedule: false
+offset_noise_strength: 0.1
+extend_dataset: false
+cache_latents: false
+cached_latent_dir: null
+save_pretrained_model: true
+logger_type: tensorboard
+motion_mask: false
+kwargs:
+  motion_strength: false
+  train_text_encoder: false
+  lora_version: cloneofsimo
+  use_unet_lora: false
+  use_text_lora: false
+  lora_unet_dropout: 0.1
+  lora_text_dropout: 0.1
+  save_lora_for_webui: true
+  only_lora_for_webui: false
+  unet_lora_modules:
+  - UNet3DConditionModel
+  text_encoder_lora_modules:
+  - CLIPEncoderLayer
+  lora_rank: 16
+  trainable_text_modules: null
