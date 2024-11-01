@@ -255,6 +255,20 @@ def create_override_settings_dropdown(tabname, row):
     return dropdown
 
 
+def outputresolution_change(width_height):
+    config_dict = {
+        "1:1(square)_768":(768, 768),
+        "1:1(square)_1024":(1024, 1024), 
+        "3:2(landscape)":(1152, 768), 
+        "2:3(portrait)":(768, 1152), 
+        "4:3(landscape)":(1152, 864), 
+        "3:4(portrait)":(864, 1152), 
+        "16:9(widescreen)":(1360, 768), 
+        "9:16(tall)":(768, 1360)
+    }
+    
+    return gr.update(label="width", value=config_dict[width_height][0], interactive=True), gr.update(label="height", value=config_dict[width_height][1], interactive=True)
+
 def create_ui():
     import modules.img2img
     import modules.txt2img
@@ -292,9 +306,11 @@ def create_ui():
                     elif category == "dimensions":
                         with FormRow():
                             with gr.Column(elem_id="txt2img_column_size", scale=4):
-                                width = gr.Slider(minimum=64, maximum=2048, step=8, label="Width", value=512, elem_id="txt2img_width")
-                                height = gr.Slider(minimum=64, maximum=2048, step=8, label="Height", value=512, elem_id="txt2img_height")
-
+                                width_height = gr.Dropdown(["1:1(square)_768", "1:1(square)_1024", "3:2(landscape)", "2:3(portrait)", "4:3(landscape)", "3:4(portrait)", "16:9(widescreen)", "9:16(tall)"], label="Output Resolution", value="16:9(widescreen)")
+                                with gr.Accordion("Resolution", open=False):
+                                    width = gr.Slider(minimum=64, maximum=2048, step=8, label="Width", value=512, elem_id="txt2img_width")
+                                    height = gr.Slider(minimum=64, maximum=2048, step=8, label="Height", value=512, elem_id="txt2img_height")
+                                width_height.change(fn=outputresolution_change, inputs=width_height, outputs=[width, height])
                             with gr.Column(elem_id="txt2img_dimensions_row", scale=1, elem_classes="dimensions-tools"):
                                 res_switch_btn = ToolButton(value=switch_values_symbol, elem_id="txt2img_res_switch_btn", tooltip="Switch width/height")
 
@@ -362,7 +378,7 @@ def create_ui():
                     if category not in {"accordions"}:
                         scripts.scripts_txt2img.setup_ui_for_section(category)
 
-            hr_resolution_preview_inputs = [enable_hr, width, height, hr_scale, hr_resize_x, hr_resize_y]
+            hr_resolution_preview_inputs = [enable_hr, width, height, hr_scale, hr_resize_x, hr_resize_y] # [enable_hr, width, height, hr_scale, hr_resize_x, hr_resize_y] # TODO
 
             for component in hr_resolution_preview_inputs:
                 event = component.release if isinstance(component, gr.Slider) else component.change
@@ -382,7 +398,7 @@ def create_ui():
                 )
 
             output_panel = create_output_panel("txt2img", opts.outdir_txt2img_samples, toprow)
-
+            
             txt2img_inputs = [
                 dummy_component,
                 toprow.prompt,
@@ -624,8 +640,11 @@ def create_ui():
                                     with gr.Tab(label="Resize to", id="to", elem_id="img2img_tab_resize_to") as tab_scale_to:
                                         with FormRow():
                                             with gr.Column(elem_id="img2img_column_size", scale=4):
-                                                width = gr.Slider(minimum=64, maximum=2048, step=8, label="Width", value=512, elem_id="img2img_width")
-                                                height = gr.Slider(minimum=64, maximum=2048, step=8, label="Height", value=512, elem_id="img2img_height")
+                                                width_height = gr.Dropdown(["1:1(square)_768", "1:1(square)_1024", "3:2(landscape)", "2:3(portrait)", "4:3(landscape)", "3:4(portrait)", "16:9(widescreen)", "9:16(tall)"], label="Output Resolution", value="16:9(widescreen)")
+                                                with gr.Accordion("Resolution", open=False):
+                                                    width = gr.Slider(minimum=64, maximum=2048, step=8, label="Width", value=512, elem_id="img2img_width")
+                                                    height = gr.Slider(minimum=64, maximum=2048, step=8, label="Height", value=512, elem_id="img2img_height")
+                                                width_height.change(fn=outputresolution_change, inputs=width_height, outputs=[width, height])
                                             with gr.Column(elem_id="img2img_dimensions_row", scale=1, elem_classes="dimensions-tools"):
                                                 res_switch_btn = ToolButton(value=switch_values_symbol, elem_id="img2img_res_switch_btn", tooltip="Switch width/height")
                                                 detect_image_size_btn = ToolButton(value=detect_image_size_symbol, elem_id="img2img_detect_image_size_btn", tooltip="Auto detect size from img2img")

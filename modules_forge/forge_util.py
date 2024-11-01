@@ -84,16 +84,18 @@ def numpy_to_pytorch(x):
     return y
 
 
-def write_images_to_mp4(frame_list: list, filename=None, fps=6):
+def write_images_to_mp4(frame_list: list, filename=None, fps=6, mode=None):
     from modules.paths_internal import default_output_dir
+    if mode == "AnimateAnything":
+        full_path = filename.replace(".mp4", "_up.mp4")
+    else:
+        video_folder = os.path.join(default_output_dir, 'svd')
+        os.makedirs(video_folder, exist_ok=True)
 
-    video_folder = os.path.join(default_output_dir, 'svd')
-    os.makedirs(video_folder, exist_ok=True)
+        if filename is None:
+            filename = generate_random_filename('.mp4')
 
-    if filename is None:
-        filename = generate_random_filename('.mp4')
-
-    full_path = os.path.join(video_folder, filename)
+        full_path = os.path.join(video_folder, filename)
 
     try:
         import av
