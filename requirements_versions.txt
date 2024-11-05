@@ -38,6 +38,7 @@ pydantic==1.10.15
 diffusers==0.24.0
 cachetools==5.3.2
 colorama==0.4.6
+huggingface-hub==0.25.2
 torchvision
 decord
 tqdm
