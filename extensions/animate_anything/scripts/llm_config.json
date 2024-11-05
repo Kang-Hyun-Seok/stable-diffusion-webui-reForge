@@ -1,5 +1,5 @@
 {
     "select_text_model": "llama-3-Korean-Bllossom-8B:latest",
-    "base_ip": "cvlab308v2.iptime.org",
-    "port": "50571"
+    "base_ip": "172.51.0.3",
+    "port": "11434"
 }
