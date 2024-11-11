@@ -837,3 +837,47 @@ def main_eval(
             save_video_path_list.append(out_file.replace(".gif", ".mp4"))
             video_frames_list.append(video_frames)
     return video_frames_list, save_video_path_list
+
+def main_eval_api(
+    pretrained_model_path: str,
+    validation_data: Dict,
+    seed: Optional[int] = None,
+    eval_file = None,
+    **kwargs
+):
+    if seed is not None:
+        set_seed(seed)
+    # Load scheduler, tokenizer and models.
+    import os
+    pipeline, tokenizer, feature_extractor, train_scheduler, vae_processor, text_encoder, vae, unet = load_primary_models(pretrained_model_path, eval=True)
+    device = torch.device("cuda")
+    pipeline.to(device)
+
+    if eval_file is not None:
+        eval_list = json.load(open(eval_file))
+    else:
+        eval_list = [[validation_data.prompt_image, validation_data.prompt]]
+    video_frames_list = []
+    iters = [1]
+    save_video_path_list = []
+    for example in eval_list:
+        for t in iters:
+            name, prompt = example
+            pimg = Image.open(validation_data.prompt_image)
+            if pimg.mode == "RGBA":
+                pimg = pimg.convert("RGB")
+            width, height = pimg.size
+            scale = math.sqrt(width*height / (validation_data.height*validation_data.width))
+            block_size=64
+            validation_data.height_ = round(height/scale/block_size)*block_size
+            validation_data.width_ = round(width/scale/block_size)*block_size
+            name_ = name.split('.')[0] 
+            out_file_dir = "{}{}_{}_{}_{}fps".format(validation_data.output_dir, datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'), str(validation_data.width_), str(validation_data.height_), str(validation_data.fps))
+            os.makedirs(out_file_dir, exist_ok=True)
+            out_file = f"{out_file_dir}/{t}.gif"
+            validation_data.prompt_image = name
+            validation_data.prompt = prompt
+            video_frames = eval(pipeline, vae_processor, validation_data, out_file, t)
+            save_video_path_list.append(out_file.replace(".gif", ".mp4"))
+            video_frames_list.append(video_frames)
+    return video_frames_list, save_video_path_list

@@ -131,6 +131,11 @@ StableDiffusionImg2ImgProcessingAPI = PydanticModelGenerator(
     ]
 ).generate_model()
 
+##
+class CUSTOM(BaseModel):
+    save_path : str = Field(title="save path", description="mp4 path")
+##
+
 class TextToImageResponse(BaseModel):
     images: list[str] = Field(default=None, title="Image", description="The generated image in base64 format.")
     parameters: dict

@@ -33,6 +33,69 @@ import piexif.helper
 from contextlib import closing
 from modules.progress import create_task_id, add_task_to_queue, start_task, finish_task, current_task
 
+from extensions.animate_anything.train_svd_infer import main_eval_api
+from omegaconf import OmegaConf
+import torch
+import cv2
+import numpy as np
+import random
+from modules_forge.forge_util import numpy_to_pytorch, pytorch_to_numpy, write_images_to_mp4
+
+def makedirs(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+@torch.inference_mode()
+@torch.no_grad()
+def predict(filename, width, height, video_frames, fps, sampling_seed, input_image, text_prompt):
+    time_str = time.strftime("%Y-%m-%d_%H_%M_%S")
+    animateanything_root = "models/animateanything"
+    save_dir_path = "{}/output_dir/{}/{}/".format(animateanything_root, filename.replace(".yaml", ""), time_str)
+    makedirs(save_dir_path)
+    
+    yaml_path = "models/animateanything/" + filename
+    input_prompt = text_prompt
+    input_image_path = save_dir_path + "_api_input_img.jpg" 
+    input_mask_path = save_dir_path + "_api_input_img_label.jpg"
+    
+    mask_image = np.zeros((height, width), dtype=np.uint8)
+    with open(input_image_path, 'wb') as f:
+        f.write(base64.b64decode(input_image))
+    cv2.imwrite(input_mask_path, mask_image)
+    
+    args_dict = OmegaConf.load(yaml_path)
+    if len(input_mask_path) > 0:
+        cli_dict = OmegaConf.create({"seed" : sampling_seed, "validation_data" : {
+            "width" : width,
+            "height" : height,
+            "fps" : fps,
+            "num_frames" : video_frames,
+            "prompt_image" : input_image_path,
+            "prompt" : input_prompt,
+            "mask" : input_mask_path,
+            "output_dir" : save_dir_path,
+            "strength" : 5
+        }})
+    else:
+        cli_dict = OmegaConf.create({"seed" : sampling_seed, "validation_data" : {
+            "width" : width,
+            "height" : height,
+            "fps" : fps,
+            "num_frames" : video_frames,
+            "prompt_image" : input_image_path,
+            "prompt" : input_prompt,
+            "output_dir" : save_dir_path
+        }})
+    
+    args_dict = OmegaConf.merge(args_dict, cli_dict)
+    video_frames_list, video_save_path_list = main_eval_api(**args_dict)
+    
+    # video_filename_1 = write_images_to_mp4(video_frames_list[0], filename = video_save_path_list[0], fps=fps, mode="AnimateAnything")
+    
+    return video_save_path_list[0]
+
+
+
 def script_name_to_index(name, scripts):
     try:
         return [script.title().lower() for script in scripts].index(name.lower())
@@ -210,6 +273,9 @@ class Api:
         api_middleware(self.app)
         self.add_api_route("/sdapi/v1/txt2img", self.text2imgapi, methods=["POST"], response_model=models.TextToImageResponse)
         self.add_api_route("/sdapi/v1/img2img", self.img2imgapi, methods=["POST"], response_model=models.ImageToImageResponse)
+        ##
+        self.add_api_route("/sdapi/v1/animate_anything", self.animate_anything_api, methods=["POST"], response_model=models.CUSTOM)
+        ##
         self.add_api_route("/sdapi/v1/extra-single-image", self.extras_single_image_api, methods=["POST"], response_model=models.ExtrasSingleImageResponse)
         self.add_api_route("/sdapi/v1/extra-batch-images", self.extras_batch_images_api, methods=["POST"], response_model=models.ExtrasBatchImagesResponse)
         self.add_api_route("/sdapi/v1/png-info", self.pnginfoapi, methods=["POST"], response_model=models.PNGInfoResponse)
@@ -563,7 +629,19 @@ class Api:
             img2imgreq.mask = None
 
         return models.ImageToImageResponse(images=b64images, parameters=vars(img2imgreq), info=processed.js())
-
+    ##
+    def animate_anything_api(self, aareq: models.StableDiffusionImg2ImgProcessingAPI):
+        filename = aareq.script_name
+        input_image = aareq.init_images[0]
+        width = aareq.width
+        height = aareq.height
+        video_frames = aareq.batch_size
+        fps = aareq.n_iter
+        sampling_seed = random.randrange(1,1000)
+        text_prompt = aareq.prompt
+        save_result_path = predict(filename, width, height, video_frames, fps, sampling_seed, input_image, text_prompt)
+        return models.CUSTOM(save_path=save_result_path)
+    ##
     def extras_single_image_api(self, req: models.ExtrasSingleImageRequest):
         reqDict = setUpscalers(req)
 
